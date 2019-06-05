@@ -80,7 +80,7 @@ function AddScoreGroup(name) -- Utility function to register a score group
 	_G["GROUP_" .. name] = GROUP_COUNT
 end
 
-function ScoreGroup(p)
+function ScoreGroup(p) --TODO: MARKER - this function will be edited and used one the scoreboard gets updated
 	if not IsValid(p) then -- will not match any group panel
 		return - 1
 	end

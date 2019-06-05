@@ -80,6 +80,15 @@ if CLIENT then
 
 	local function GetMSBColorForPlayer(ply)
 		local color = Color(0, 0, 0, 130) -- not yet confirmed
+		
+		-- missing in action
+		if LocalPlayer():IsSpec() or LocalPlayer():IsActive() and LocalPlayer():HasTeam(TEAM_TRAITOR) then
+			if ply:IsSpec() and not ply:Alive() then
+				color = Color(215, 215, 215, 155) -- missing in action
+			end
+		end
+
+		-- normal mode
 		if ply:OnceFound() then
 			if ply:RoleKnown() then
 				local roleColor = ply:GetRoleColor()
@@ -88,6 +97,7 @@ if CLIENT then
 				color = Color(215, 215, 215, 155) -- indirect confirmed
 			end
 		end
+
 
 		return hook.Run("TTT2ModifyMiniscoreboardColor", ply, color) or color
 	end
@@ -99,6 +109,21 @@ if CLIENT then
 
 		if #players ~= self.curPlayerCount then
 			self:PerformLayout()
+		end
+
+		-- presort playerlist: move missing in action to the end
+		if LocalPlayer():IsSpec() or LocalPlayer():IsActive() and LocalPlayer():HasTeam(TEAM_TRAITOR) then
+			table.sort(players, function (a,b) 
+				if a:IsSpec() and not a:Alive() then -- a is missing in action
+					return true
+				end
+
+				if not a:OnceFound() then
+					return true
+				end
+
+				return false
+			end)
 		end
 
 		-- sort playerlist: confirmed players should be in the first position
@@ -133,10 +158,16 @@ if CLIENT then
 			surface.SetDrawColor(clr(ply_color))
 			surface.DrawRect(tmp_x, tmp_y, self.ply_ind_size, self.ply_ind_size)
 
-			if p:Revived() then
+			if p:Revived() then 
+				-- draw maker on revived people
 				util.DrawFilteredTexturedRect(tmp_x +3, tmp_y +3, self.ply_ind_size -6, self.ply_ind_size -6, self.icon_revived, 180, {r=0,g=0,b=0})
-			elseif p:OnceFound() and not p:RoleKnown() then -- draw marker on indirect confirmed bodies
+			elseif p:OnceFound() and not p:RoleKnown() then
+				-- draw marker on indirect confirmed bodies
 				util.DrawFilteredTexturedRect(tmp_x +3, tmp_y +3, self.ply_ind_size -6, self.ply_ind_size -6, self.icon_in_conf, 120, {r=0,g=0,b=0})
+			elseif (LocalPlayer():IsSpec() or LocalPlayer():IsActive() and LocalPlayer():HasTeam(TEAM_TRAITOR)) and (p:IsSpec() and not p:Alive()) then
+				-- draw marker on missing in action
+				--util.DrawFilteredTexturedRect(tmp_x +3, tmp_y +3, self.ply_ind_size -6, self.ply_ind_size -6, self.icon_in_conf, 120, {r=0,g=0,b=0})
+				util.OutlinedBox(tmp_x, tmp_y, self.ply_ind_size, self.ply_ind_size, 3, Color(255, 0, 0, 180))
 			end
 
 			-- draw lines around the element
